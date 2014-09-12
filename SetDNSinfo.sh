@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Set Search Domains
-# Author: r.purves@arts.ac.uk
+# Author: contact@richard-purves.com
 # Version 1.0 : 15-10-2012 - Initial Version
 # Version 1.1 : 16-10-2012 - Bugfixed Version
 # Version 1.2 : 23-10-2012 - Use an array to pass spaces in network service name
