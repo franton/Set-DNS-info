@@ -1,11 +1,12 @@
 #!/bin/sh
 
 # Set Search Domains
-# Author: contact@richard-purves.com
+# Author: richard at richard - purves dot com
 # Version 1.0 : 15-10-2012 - Initial Version
 # Version 1.1 : 16-10-2012 - Bugfixed Version
 # Version 1.2 : 23-10-2012 - Use an array to pass spaces in network service name
 # Version 1.3 : 24-10-2012 - Improved logging
+# Version 2.0 : 14-09-2017 - Massively reworked based on a suggestion by Erik Berglund.
 
 # This script should detect the names of any present specified network ports and
 # configure the search domains settings accordingly.
@@ -52,41 +53,17 @@ if [ "$SecondaryDNS" == "" ]; then
 	exit 1
 fi
 
-# We're going to be doing clever things with $IFS
-# (internal field separator)
-# So we need to save IFS so we can change it back later 
-OLDIFS=$IFS
-IFS=$'\n'
-
-# Let's start setting the search domains
- 
 # Read the output of the networksetup command
-# Grep that output through the specified service name
-# Then read all of it into an array
-NetServiceArray=($( networksetup -listallnetworkservices | grep $searchNetwork ))
- 
-# We'll stop being clever with $IFS and put it back the way it was
-IFS=$OLDIFS
- 
-# What's the length of the array? We need it for the following loop
-tLen=${#NetServiceArray[@]}
- 
-# This is the bit that actually does the work
-# Loop around the array and process the contents
-for (( i=0; i<${tLen}; i++ ));
-do
-  echo "Network Service name to be configured - " "${NetServiceArray[$i]}"
-  echo "Specified Search Domains addresses - " $searchDomain1 $searchDomain2
-  echo "Specified DNS server addresses - " $PrimaryDNS $SecondaryDNS
-  networksetup -setsearchdomains "${NetServiceArray[$i]}" $searchDomain1 $searchDomain2
-  networksetup -setdnsservers "${NetServiceArray[$i]}" $PrimaryDNS $SecondaryDNS
-done
+# Grep that output through the specified service name and process
 
-# Let's make sure the DNS hostnames match the computer name
-setName=`networksetup -getcomputername`
-scutil --set ComputerName ${setName}
-scutil --set LocalHostName ${setName}
-scutil --set HostName ${setName}
+while read networkService; do
+	printf "%s\n" "${networkService}"
+	echo "Network Service name to be configured - ${networkService}"
+	echo "Specified Search Domains addresses - ${searchDomain1} ${searchDomain2}"
+	echo "Specified DNS server addresses - ${PrimaryDNS} ${SecondaryDNS}"
+	networksetup -setsearchdomains "${networkService}" $searchDomain1 $searchDomain2
+	networksetup -setdnsservers "${networkService}" $PrimaryDNS $SecondaryDNS
+done < <( networksetup -listallnetworkservices | grep -E "$searchNetwork" )
 
 # All done!
 echo "Completed!"
